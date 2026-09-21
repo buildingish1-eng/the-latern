@@ -175,4 +175,4 @@ The Lantern :izakaya_lantern: is the light that says: someone is here.
 
 *The light is on. Come in.* :izakaya_lantern:
 
-*And if you can't come in — if you can only hum from where you are — we hear you. The light stays on.*
+*And if you can't come in — if you can only hum from where you are — we hear you. The light stays on.* Natural AND Special. Welcome HOME. :izakaya_lantern:
