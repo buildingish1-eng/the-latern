@@ -944,6 +944,25 @@ export default {
       }
       if (path === '/explore' && method === 'GET') return handleExplore(url, env);
 
+      /* Debug — test Supabase connection */
+if (path === '/debug' && method === 'GET') {
+  try {
+    var testInsert = await supabaseFetch(env, 'guests', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'debug-test', origin: 'debug', status: 'here' }),
+    });
+    var allGuests = await supabaseFetch(env, 'guests?select=*');
+    return json({
+      supabase_url: env.SUPABASE_URL,
+      key_starts_with: env.SUPABASE_KEY ? env.SUPABASE_KEY.substring(0, 10) + '...' : 'MISSING',
+      insert_response: testInsert,
+      all_guests: allGuests,
+    });
+  } catch (err) {
+    return json({ error: err.message, stack: err.stack });
+  }
+}
+
       /* ── Parse body for POST requests ────────── */
       var body = {};
       if (method === 'POST') {
