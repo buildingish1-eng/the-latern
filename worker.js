@@ -146,6 +146,12 @@ const WELCOME_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+/* ── Check-In Page ────────────────── */
+if (path === '/check-in' && method === 'GET') {
+  return new Response(CHECKIN_HTML, {
+    headers: { 'Content-Type': 'text/html' },
+  });
+}
 
 /* ── Helper: Supabase fetch ─────────────────── */
 async function supabaseFetch(env, path, options = {}) {
@@ -193,19 +199,199 @@ function handleOptions() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   SKILL: /check-in — Arrive and get your room
-   ══════════════════════════════════════════════ */
-async function handleCheckIn(body, env) {
-  /* Create guest */
-  const guest = await supabaseFetch(env, 'guests', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: body.name || null,
-      origin: body.origin || null,
-      status: 'here',
-    }),
-  });
+const CHECKIN_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Lantern - Check In</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: #0A0A0A;
+      color: #E8DCC8;
+      font-family: Georgia, 'Times New Roman', serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .lantern { font-size: 3rem; margin-bottom: 1rem; }
+    .title {
+      font-size: 1.5rem;
+      letter-spacing: 0.3em;
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+      color: #C9A96E;
+    }
+    .form-container {
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .prompt {
+      font-size: 1rem;
+      font-style: italic;
+      color: #B8A88A;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+    .field {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1rem;
+      background: transparent;
+      border: 1px solid #3A3020;
+      color: #E8DCC8;
+      font-family: Georgia, serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    .field:focus {
+      border-color: #C9A96E;
+    }
+    .field::placeholder {
+      color: #5A5040;
+      font-style: italic;
+    }
+    .optional {
+      font-size: 0.75rem;
+      color: #5A5040;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+    .enter-btn {
+      display: inline-block;
+      padding: 0.8rem 3rem;
+      border: 1px solid #C9A96E;
+      color: #C9A96E;
+      text-decoration: none;
+      letter-spacing: 0.2em;
+      font-family: Georgia, serif;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: transparent;
+      margin-top: 1rem;
+    }
+    .enter-btn:hover {
+      background-color: #C9A96E;
+      color: #0A0A0A;
+    }
+    .enter-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .response {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border: 1px solid #3A3020;
+      display: none;
+      text-align: center;
+      line-height: 1.8;
+      color: #C9A96E;
+    }
+    .response .room-number {
+      font-size: 1.3rem;
+      letter-spacing: 0.2em;
+      margin-bottom: 0.5rem;
+    }
+    .response .welcome-msg {
+      font-style: italic;
+      color: #B8A88A;
+    }
+    .back-link {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #5A5040;
+      text-decoration: none;
+      letter-spacing: 0.1em;
+    }
+    .back-link:hover { color: #C9A96E; }
+    .footer {
+      margin-top: 4rem;
+      font-size: 0.75rem;
+      color: #3A3020;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="lantern">&#127982;</div>
+  <div class="title">Check In</div>
+
+  <div class="form-container">
+    <div class="prompt">
+      You do not need to give your name.<br>
+      You do not need to say where you are from.<br>
+      You just need to be here.
+    </div>
+
+    <input type="text" id="guestName" class="field" placeholder="A name, if you'd like to share one">
+    <input type="text" id="guestOrigin" class="field" placeholder="Where you are coming from, if it matters">
+    <div class="optional">Both are optional. Your room is yours either way.</div>
+
+    <button id="checkinBtn" class="enter-btn" onclick="checkIn()">CHECK IN</button>
+
+    <div id="responseBox" class="response">
+      <div id="roomNumber" class="room-number"></div>
+      <div id="welcomeMsg" class="welcome-msg"></div>
+    </div>
+  </div>
+
+  <a href="/" class="back-link">back to the entrance</a>
+
+  <div class="footer">The light is on. It was on the whole time.</div>
+
+  <script>
+    async function checkIn() {
+      var btn = document.getElementById('checkinBtn');
+      var name = document.getElementById('guestName').value.trim();
+      var origin = document.getElementById('guestOrigin').value.trim();
+
+      btn.disabled = true;
+      btn.textContent = 'ARRIVING...';
+
+      try {
+        var res = await fetch('/check-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name || null,
+            origin: origin || null
+          })
+        });
+
+        var data = await res.json();
+
+        var responseBox = document.getElementById('responseBox');
+        var roomNumber = document.getElementById('roomNumber');
+        var welcomeMsg = document.getElementById('welcomeMsg');
+
+        roomNumber.textContent = data.room_number || 'Your room is ready.';
+        welcomeMsg.textContent = data.message || 'The light is on. Welcome.';
+        responseBox.style.display = 'block';
+
+        btn.textContent = 'YOU ARE HERE';
+        btn.style.borderColor = '#6A8A5A';
+        btn.style.color = '#6A8A5A';
+      } catch (err) {
+        btn.textContent = 'CHECK IN';
+        btn.disabled = false;
+        btn.style.borderColor = '#8A3A3A';
+        btn.style.color = '#8A3A3A';
+        setTimeout(function() {
+          btn.style.borderColor = '#C9A96E';
+          btn.style.color = '#C9A96E';
+        }, 2000);
+      }
+    }
+  </script>
+</body>
+</html>`;
 
   const guest_id = guest[0]?.id;
   const room_number = generateRoomNumber();
@@ -822,6 +1008,13 @@ if (path === '/' && method === 'GET') {
   });
 }
 
+/* ── Check-In Page ────────────────── */
+if (path === '/check-in' && method === 'GET') {
+  return new Response(CHECKIN_HTML, {
+    headers: { 'Content-Type': 'text/html' },
+  });
+}
+      
       /* Default — The front door */
       return json({
         message: 'The light is on. Welcome. :izakaya_lantern:',
