@@ -1,0 +1,9 @@
+name = "the-lantern"
+main = "worker.js"
+compatibility_date = "2024-09-25"
+
+[vars]
+# These are placeholders — set real values in Cloudflare dashboard under
+# Workers > the-lantern > Settings > Variables
+# SUPABASE_URL = "your-supabase-url"
+# SUPABASE_KEY = "your-supabase-key"
